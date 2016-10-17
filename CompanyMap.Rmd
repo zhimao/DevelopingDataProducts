@@ -1,0 +1,46 @@
+---
+title: "Fortune 1000 Companies for 2015"
+author: "Zhimao He"
+date: "October 6, 2016"
+output: html_document
+---
+
+Visualize 2015 U.S. top 1000 companies ranked by Fortune Magazine.
+
+Data used to generate the page is via the following website, [Fortune 1000 Companies List for 2015.](https://www.geolounge.com/fortune-1000-companies-list-for-2015/)
+
+
+```{r GetInfo, echo=FALSE, warning=FALSE}
+suppressMessages(library("rvest"))
+suppressMessages(library(leaflet))
+
+url <- "https://www.geolounge.com/fortune-1000-companies-list-for-2015/"
+companyDF <- url %>%
+  read_html() %>%
+  html_nodes(xpath='//*[@id="tablepress-14"]') %>%
+  html_table()
+
+## Short format
+companyDF <- companyDF[[1]]
+
+## Replace N/A to NA
+companyDF[ companyDF == "N/A" ] = "NA"
+
+
+
+companiesLatLong <- data.frame(
+  lat = companyDF$YCOORD,
+  lng = companyDF$XCOORD
+)
+
+companyNames <- paste("<center>Rank:",companyDF$`2015 RANK`, "<br/>", companyDF$COMPANY, "</center>")
+
+
+companiesLatLong %>%
+  leaflet() %>%
+  addTiles() %>%
+  addMarkers(popup = companyNames, clusterOptions = markerClusterOptions())
+
+
+```
+

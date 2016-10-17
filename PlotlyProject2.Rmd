@@ -1,0 +1,58 @@
+---
+title: "Plotly Project"
+author: "Zhimao He"
+date: "October 15, 2016"
+output: html_document
+---
+
+2015 U.S. top 1000 companies ranked by Fortune Magazine. Hover for rank and company names.
+
+Data used to generate the page is via the following website, [Fortune 1000 Companies List for 2015.](https://www.geolounge.com/fortune-1000-companies-list-for-2015/)
+
+
+```{r GetInfo, echo=FALSE, warning=FALSE}
+suppressMessages(library("rvest"))
+suppressMessages(library(plotly))
+
+url <- "https://www.geolounge.com/fortune-1000-companies-list-for-2015/"
+companyDF <- url %>%
+  read_html() %>%
+  html_nodes(xpath='//*[@id="tablepress-14"]') %>%
+  html_table()
+
+## Short format
+companyDF <- companyDF[[1]]
+
+## Replace N/A to NA
+companyDF[ companyDF == "N/A" ] = "NA"
+
+## Set hover
+companyDF$hover <- paste('Rank:', companyDF$`2015 RANK` , '<br>', companyDF$COMPANY)
+
+## Set map options
+mapOptions = list(
+      scope = 'usa',
+      projection = list(type = 'albers usa'),
+      showland = TRUE,
+      landcolor = toRGB("gray95"),
+      subunitcolor = toRGB("lightgray"), 
+      showlakes = TRUE,
+      lakecolor = toRGB("white"),
+      countrywidth = 0.5,
+      subunitwidth = 0.5
+    )
+
+## plotly
+plot_geo(companyDF, lat = ~YCOORD, lon = ~XCOORD) %>%
+  add_markers(
+    text = companyDF$hover, 
+    color = as.factor(companyDF$STATE), 
+    symbol = I("square"), size=I(8), hoverinfo="text"
+  ) %>%
+  layout(
+    title = 'Top 1000 US Companies',
+    geo = mapOptions
+  )
+
+```
+
